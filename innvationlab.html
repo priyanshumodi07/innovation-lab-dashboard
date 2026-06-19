@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innovation Lab Control Panel</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f4f4f9;
+        }
+
+        /* Updated Header with Working Public Image */
+        header {
+            background-image: linear-gradient(rgba(44, 62, 80, 0.7), rgba(44, 62, 80, 0.8)), url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            padding: 4rem 1rem; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        header h1 {
+            margin: 0;
+            letter-spacing: 3px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6); 
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .status {
+            margin-bottom: 2rem;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background-color: #e74c3c;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .status.connected {
+            background-color: #2ecc71;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        /* Upgraded Control Cards */
+        .control-card {
+            background: #ffffff;
+            padding: 2rem 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 1px solid #eaeaea;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .control-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .control-card h3 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Upgraded Toggle Switch with Glow */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 64px;
+            height: 36px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #e0e0e0;
+            transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1);
+            border-radius: 36px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 28px;
+            width: 28px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: #00d2ff;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+
+        @media (max-width: 600px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Updated Footer with Positioning */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+            position: relative; 
+        }
+
+        .creator-tag {
+            position: absolute;
+            right: 20px;
+            bottom: 15px;
+            font-size: 0.85rem;
+            color: #bdc3c7;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>INNOVATION LAB</h1>
+        <p style="margin-top: 10px; font-size: 1.1rem; color: #ecf0f1;">Hardware Control & Automation Dashboard</p>
+    </header>
+
+    <main>
+        <div id="connection-status" class="status">Connecting to Broker...</div>
+        
+        <div class="grid-container">
+            <div class="control-card">
+                <h3>Device 1</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch1" onchange="publishMessage(1)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-card">
+                <h3>Device 2</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch2" onchange="publishMessage(2)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-card">
+                <h3>Device 3</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch3" onchange="publishMessage(3)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-card">
+                <h3>Device 4</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch4" onchange="publishMessage(4)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-card">
+                <h3>Device 5</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch5" onchange="publishMessage(5)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-card">
+                <h3>Device 6</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch6" onchange="publishMessage(6)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-card">
+                <h3>Device 7</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch7" onchange="publishMessage(7)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-card">
+                <h3>Device 8</h3>
+                <label class="switch">
+                    <input type="checkbox" id="switch8" onchange="publishMessage(8)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Innovation Lab. All Rights Reserved.</p>
+        <div class="creator-tag">Made by Priyansu Modi</div>
+    </footer>
+
+    <script>
+        // EMQX Public Broker details (Secure WebSockets)
+        const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+        
+        // Generate a random Client ID
+        const clientId = 'lab_client_' + Math.random().toString(16).substring(2, 10);
+
+        // Define your secret unique prefix here so no one else disturbs your devices
+        const topicPrefix = 'secure-lab-7742/switch/';
+
+        // Connect using MQTT.js
+        console.log(`Connecting to ${brokerUrl} as ${clientId}...`);
+        const client = mqtt.connect(brokerUrl, {
+            clientId: clientId,
+            clean: true,
+            connectTimeout: 4000,
+            reconnectPeriod: 1000,
+        });
+
+        const statusDiv = document.getElementById("connection-status");
+
+        // 1. Connection successful
+        client.on('connect', () => {
+            statusDiv.textContent = "System Online (Sync Active)";
+            statusDiv.classList.add("connected");
+            console.log("Connected successfully!");
+
+            // Listen for changes from MQTTX
+            client.subscribe(topicPrefix + '+', (err) => {
+                if (!err) {
+                    console.log(`Subscribed to ${topicPrefix}+`);
+                }
+            });
+        });
+
+        // 2. Listen for incoming messages
+        client.on('message', (topic, message) => {
+            console.log(`Received message on [${topic}]: ${message.toString()}`);
+
+            // Extract the device number from the topic
+            const topicParts = topic.split('/');
+            const deviceNumber = topicParts[2]; // Gets the '1', '2', etc.
+
+            try {
+                const payload = JSON.parse(message.toString());
+                const state = payload.status; 
+                
+                const toggleSwitch = document.getElementById(`switch${deviceNumber}`);
+                
+                if (toggleSwitch) {
+                    if (state === "ON") {
+                        toggleSwitch.checked = true;
+                    } else if (state === "OFF") {
+                        toggleSwitch.checked = false;
+                    }
+                }
+            } catch (error) {
+                console.error("Payload is not valid JSON.", error);
+            }
+        });
+
+        // Connection error
+        client.on('error', (err) => {
+            console.error("Connection error: ", err);
+            statusDiv.textContent = "Connection Error";
+            statusDiv.classList.remove("connected");
+            client.end();
+        });
+
+        // Reconnecting
+        client.on('reconnect', () => {
+            statusDiv.textContent = "Reconnecting...";
+            statusDiv.classList.remove("connected");
+        });
+
+        // 3. User clicks a switch on the website
+        function publishMessage(deviceNumber) {
+            if (!client.connected) {
+                alert("System not connected to network.");
+                return;
+            }
+
+            const isChecked = document.getElementById(`switch${deviceNumber}`).checked;
+            const state = isChecked ? "ON" : "OFF";
+            
+            const topic = topicPrefix + deviceNumber;
+            const payload = JSON.stringify({ device: deviceNumber, status: state });
+            
+            client.publish(topic, payload, { qos: 0 }, (error) => {
+                if (error) {
+                    console.error('Publish error: ', error);
+                } else {
+                    console.log(`Published: [${topic}] ${payload}`);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
