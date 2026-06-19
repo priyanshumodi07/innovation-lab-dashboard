@@ -6,7 +6,6 @@
     <title>Innovation Lab Control Panel</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     
     <style>
@@ -20,7 +19,6 @@
             background-color: #f4f4f9;
         }
 
-        /* Updated Header with Working Public Image */
         header {
             background-image: linear-gradient(rgba(44, 62, 80, 0.7), rgba(44, 62, 80, 0.8)), url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1920&auto=format&fit=crop');
             background-size: cover;
@@ -46,19 +44,67 @@
             align-items: center;
         }
 
+        .status-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
         .status {
-            margin-bottom: 2rem;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 5px;
             background-color: #e74c3c;
             color: white;
             font-weight: bold;
+            font-size: 0.9rem;
             transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .status.connected {
             background-color: #2ecc71;
         }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            padding: 10px 20px;
+            transition: transform 0.2s, background-color 0.2s, opacity 0.2s;
+        }
+
+        .btn-success { background-color: #2ecc71; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-success:hover { background-color: #27ae60; }
+        .btn-success:active { transform: scale(0.98); }
+
+        .btn-flow { background-color: #00d2ff; color: #2c3e50; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-flow:hover { background-color: #00b4db; }
+        .btn-flow:active { transform: scale(0.98); }
+
+        .btn-loop { background-color: #9b59b6; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-loop:hover { background-color: #8e44ad; }
+        .btn-loop:active { transform: scale(0.98); }
+
+        .btn-primary { background-color: #e74c3c; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-primary:hover { background-color: #c0392b; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        .btn-ghost { background: rgba(0, 0, 0, 0.05); color: #2c3e50; border: 1px solid rgba(0, 0, 0, 0.1); }
+        .btn-ghost:hover { background: rgba(0, 0, 0, 0.1); }
+
+        .disabled { opacity: 0.5 !important; pointer-events: none !important; }
 
         .grid-container {
             display: grid;
@@ -68,7 +114,6 @@
             width: 100%;
         }
 
-        /* Upgraded Control Cards */
         .control-card {
             background: #ffffff;
             padding: 2rem 1.5rem;
@@ -76,92 +121,51 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
             text-align: center;
             border: 1px solid #eaeaea;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s;
         }
 
-        .control-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        .control-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .control-card h3 { margin-top: 0; margin-bottom: 0.5rem; color: #2c3e50; font-size: 1.2rem; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .relay-state-label { font-size: 0.85rem; font-weight: bold; color: #7f8c8d; margin-bottom: 1rem; text-transform: uppercase; }
+        .relay-state-label.on { color: #2ecc71; }
+
+        .switch { position: relative; display: inline-block; width: 64px; height: 36px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e0e0e0; transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 36px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .slider:before { position: absolute; content: ""; height: 28px; width: 28px; left: 4px; bottom: 4px; background-color: white; transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+        input:checked + .slider:before { transform: translateX(28px); }
+
+        @keyframes pulseFlow {
+            0% { border-color: #eaeaea; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+            50% { border-color: #00d2ff; box-shadow: 0 10px 25px rgba(0, 210, 255, 0.2); }
+            100% { border-color: #eaeaea; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        }
+        
+        @keyframes pulseLoop {
+            0% { border-color: #eaeaea; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+            50% { border-color: #9b59b6; box-shadow: 0 10px 25px rgba(155, 89, 182, 0.3); }
+            100% { border-color: #eaeaea; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         }
 
-        .control-card h3 {
-            margin-top: 0;
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
+        .flow-active .control-card { animation: pulseFlow 2s infinite ease-in-out; }
+        .loop-active .control-card { animation: pulseLoop 1.5s infinite ease-in-out; }
+        
+        .flow-active #card-1, .loop-active #card-1 { animation-delay: 0.0s; } 
+        .flow-active #card-2, .loop-active #card-2 { animation-delay: 0.2s; }
+        .flow-active #card-3, .loop-active #card-3 { animation-delay: 0.4s; } 
+        .flow-active #card-4, .loop-active #card-4 { animation-delay: 0.6s; }
+        .flow-active #card-5, .loop-active #card-5 { animation-delay: 0.8s; } 
+        .flow-active #card-6, .loop-active #card-6 { animation-delay: 1.0s; }
+        .flow-active #card-7, .loop-active #card-7 { animation-delay: 1.2s; } 
+        .flow-active #card-8, .loop-active #card-8 { animation-delay: 1.4s; }
 
-        /* Upgraded Toggle Switch with Glow */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 64px;
-            height: 36px;
-        }
+        @media (max-width: 600px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #e0e0e0;
-            transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1);
-            border-radius: 36px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 28px;
-            width: 28px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1);
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        input:checked + .slider {
-            background-color: #00d2ff;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(28px);
-        }
-
-        @media (max-width: 600px) {
-            .grid-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* Updated Footer with Positioning */
-        footer {
-            background-color: #2c3e50;
-            color: white;
-            text-align: center;
-            padding: 1.5rem 0;
-            position: relative; 
-        }
-
-        .creator-tag {
-            position: absolute;
-            right: 20px;
-            bottom: 15px;
-            font-size: 0.85rem;
-            color: #bdc3c7;
-            letter-spacing: 1px;
-        }
+        .info-tag { font-size: 0.85rem; color: #7f8c8d; margin-top: 1.5rem; text-align: center; max-width: 800px; line-height: 1.4; }
+        footer { background-color: #2c3e50; color: white; text-align: center; padding: 1.5rem 0; position: relative; margin-top: 2rem; }
+        .creator-tag { position: absolute; right: 20px; bottom: 15px; font-size: 0.85rem; color: #bdc3c7; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -172,65 +176,33 @@
     </header>
 
     <main>
-        <div id="connection-status" class="status">Connecting to Broker...</div>
+        <div class="status-container">
+            <div id="connection-status" class="status">Web: Disconnected</div>
+            <div id="hw-status" class="status">Hardware: Unknown</div>
+        </div>
         
-        <div class="grid-container">
-            <div class="control-card">
-                <h3>Device 1</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch1" onchange="publishMessage(1)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-card">
-                <h3>Device 2</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch2" onchange="publishMessage(2)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-card">
-                <h3>Device 3</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch3" onchange="publishMessage(3)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-card">
-                <h3>Device 4</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch4" onchange="publishMessage(4)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-card">
-                <h3>Device 5</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch5" onchange="publishMessage(5)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-card">
-                <h3>Device 6</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch6" onchange="publishMessage(6)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-card">
-                <h3>Device 7</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch7" onchange="publishMessage(7)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-card">
-                <h3>Device 8</h3>
-                <label class="switch">
-                    <input type="checkbox" id="switch8" onchange="publishMessage(8)">
-                    <span class="slider"></span>
-                </label>
-            </div>
+        <div class="actions">
+            <button class="btn-success" id="all-on-btn">ALL ON</button>
+            <button class="btn-flow" id="flow-btn">FLOW ONCE</button>
+            <button class="btn-loop" id="loop-flow-btn">LOOP FLOW</button>
+            <button class="btn-primary" id="all-off-btn">ALL OFF</button>
+            <button class="btn-ghost" id="reconnect-btn">Reconnect Web</button>
+        </div>
+
+        <div class="grid-container" id="led-grid">
+            <div class="control-card" id="card-1"><h3>LED 1</h3><div class="relay-state-label" id="label-1">OFF</div><label class="switch"><input type="checkbox" id="switch1"><span class="slider"></span></label></div>
+            <div class="control-card" id="card-2"><h3>LED 2</h3><div class="relay-state-label" id="label-2">OFF</div><label class="switch"><input type="checkbox" id="switch2"><span class="slider"></span></label></div>
+            <div class="control-card" id="card-3"><h3>LED 3</h3><div class="relay-state-label" id="label-3">OFF</div><label class="switch"><input type="checkbox" id="switch3"><span class="slider"></span></label></div>
+            <div class="control-card" id="card-4"><h3>LED 4</h3><div class="relay-state-label" id="label-4">OFF</div><label class="switch"><input type="checkbox" id="switch4"><span class="slider"></span></label></div>
+            <div class="control-card" id="card-5"><h3>LED 5</h3><div class="relay-state-label" id="label-5">OFF</div><label class="switch"><input type="checkbox" id="switch5"><span class="slider"></span></label></div>
+            <div class="control-card" id="card-6"><h3>LED 6</h3><div class="relay-state-label" id="label-6">OFF</div><label class="switch"><input type="checkbox" id="switch6"><span class="slider"></span></label></div>
+            <div class="control-card" id="card-7"><h3>LED 7</h3><div class="relay-state-label" id="label-7">OFF</div><label class="switch"><input type="checkbox" id="switch7"><span class="slider"></span></label></div>
+            <div class="control-card" id="card-8"><h3>LED 8</h3><div class="relay-state-label" id="label-8">OFF</div><label class="switch"><input type="checkbox" id="switch8"><span class="slider"></span></label></div>
+        </div>
+
+        <div class="info-tag">
+            MQTT Broker: <strong>broker.emqx.io</strong> · Base Topic: <strong>smart_innovation_lab_ecb_eice</strong><br/>
+            Tracking <code>/system/status</code> via MQTT Last Will and Testament (LWT).
         </div>
     </main>
 
@@ -240,101 +212,194 @@
     </footer>
 
     <script>
-        // EMQX Public Broker details (Secure WebSockets)
-        const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
-        
-        // Generate a random Client ID
-        const clientId = 'lab_client_' + Math.random().toString(16).substring(2, 10);
-
-        // Define your secret unique prefix here so no one else disturbs your devices
-        const topicPrefix = 'secure-lab-7742/switch/';
-
-        // Connect using MQTT.js
-        console.log(`Connecting to ${brokerUrl} as ${clientId}...`);
-        const client = mqtt.connect(brokerUrl, {
-            clientId: clientId,
-            clean: true,
-            connectTimeout: 4000,
-            reconnectPeriod: 1000,
-        });
+        const BROKER_URL = "wss://broker.emqx.io:8084/mqtt"; 
+        const BASE_TOPIC = "smart_innovation_lab_ecb_eice";
+        const RELAY_COUNT = 8;
 
         const statusDiv = document.getElementById("connection-status");
+        const hwStatusDiv = document.getElementById("hw-status");
+        const ledGrid = document.getElementById("led-grid");
+        
+        const allOnBtn = document.getElementById("all-on-btn");
+        const flowBtn = document.getElementById("flow-btn");
+        const loopFlowBtn = document.getElementById("loop-flow-btn");
+        const allOffBtn = document.getElementById("all-off-btn");
+        const reconnectBtn = document.getElementById("reconnect-btn");
 
-        // 1. Connection successful
-        client.on('connect', () => {
-            statusDiv.textContent = "System Online (Sync Active)";
-            statusDiv.classList.add("connected");
-            console.log("Connected successfully!");
+        let client;
+        let clientId = `webdash-${Math.random().toString(16).slice(2, 10)}`;
 
-            // Listen for changes from MQTTX
-            client.subscribe(topicPrefix + '+', (err) => {
-                if (!err) {
-                    console.log(`Subscribed to ${topicPrefix}+`);
+        const options = {
+            clientId,
+            reconnectPeriod: 2000,
+            clean: true,
+            connectTimeout: 8000,
+            protocolVersion: 4,
+        };
+
+        function setConnectionState(connected) {
+            if (connected) {
+                statusDiv.textContent = "Web: Connected";
+                statusDiv.classList.add("connected");
+                allOnBtn.classList.remove("disabled");
+                flowBtn.classList.remove("disabled");
+                loopFlowBtn.classList.remove("disabled");
+                allOffBtn.classList.remove("disabled");
+                reconnectBtn.classList.add("disabled");
+            } else {
+                statusDiv.textContent = "Web: Disconnected";
+                statusDiv.classList.remove("connected");
+                hwStatusDiv.textContent = "Hardware: Unknown";
+                hwStatusDiv.classList.remove("connected");
+                
+                allOnBtn.classList.add("disabled");
+                flowBtn.classList.add("disabled");
+                loopFlowBtn.classList.add("disabled");
+                allOffBtn.classList.add("disabled");
+                reconnectBtn.classList.remove("disabled");
+                ledGrid.classList.remove("flow-active", "loop-active");
+            }
+            
+            for (let i = 1; i <= RELAY_COUNT; i++) {
+                const sw = document.getElementById(`switch${i}`);
+                if (sw) sw.classList.toggle("disabled", !connected);
+            }
+        }
+
+        function updateRelayUI(idx, on) {
+            const toggleSwitch = document.getElementById(`switch${idx}`);
+            const stateLabel = document.getElementById(`label-${idx}`);
+            
+            if (toggleSwitch && stateLabel) {
+                toggleSwitch.checked = on;
+                stateLabel.textContent = on ? "ON" : "OFF";
+                stateLabel.classList.toggle("on", on);
+            }
+        }
+
+        function connectMQTT() {
+            if (client) { try { client.end(true); } catch (e) {} }
+            client = mqtt.connect(BROKER_URL, options);
+
+            client.on("connect", () => {
+                setConnectionState(true);
+                for (let i = 1; i <= RELAY_COUNT; i++) {
+                    client.subscribe(`${BASE_TOPIC}/relay/${i}/state`, { qos: 0 });
                 }
+                client.subscribe(`${BASE_TOPIC}/system/status`, { qos: 0 });
             });
-        });
 
-        // 2. Listen for incoming messages
-        client.on('message', (topic, message) => {
-            console.log(`Received message on [${topic}]: ${message.toString()}`);
+            client.on("reconnect", () => {
+                statusDiv.textContent = "Web: Connecting...";
+                statusDiv.classList.remove("connected");
+            });
+            
+            client.on("close", () => setConnectionState(false));
+            client.on("offline", () => setConnectionState(false));
+            client.on("error", (err) => { console.error("MQTT error:", err); setConnectionState(false); });
 
-            // Extract the device number from the topic
-            const topicParts = topic.split('/');
-            const deviceNumber = topicParts[2]; // Gets the '1', '2', etc.
-
-            try {
-                const payload = JSON.parse(message.toString());
-                const state = payload.status; 
+            client.on("message", (topic, payload) => {
+                const msg = payload.toString().toUpperCase().trim();
                 
-                const toggleSwitch = document.getElementById(`switch${deviceNumber}`);
-                
-                if (toggleSwitch) {
-                    if (state === "ON") {
-                        toggleSwitch.checked = true;
-                    } else if (state === "OFF") {
-                        toggleSwitch.checked = false;
+                if (topic.endsWith("/system/status")) {
+                    if (msg === "ONLINE") {
+                        hwStatusDiv.textContent = "Hardware: ONLINE";
+                        hwStatusDiv.classList.add("connected");
+                    } else {
+                        hwStatusDiv.textContent = "Hardware: OFFLINE";
+                        hwStatusDiv.classList.remove("connected");
                     }
+                    return; 
                 }
-            } catch (error) {
-                console.error("Payload is not valid JSON.", error);
-            }
-        });
 
-        // Connection error
-        client.on('error', (err) => {
-            console.error("Connection error: ", err);
-            statusDiv.textContent = "Connection Error";
-            statusDiv.classList.remove("connected");
-            client.end();
-        });
-
-        // Reconnecting
-        client.on('reconnect', () => {
-            statusDiv.textContent = "Reconnecting...";
-            statusDiv.classList.remove("connected");
-        });
-
-        // 3. User clicks a switch on the website
-        function publishMessage(deviceNumber) {
-            if (!client.connected) {
-                alert("System not connected to network.");
-                return;
-            }
-
-            const isChecked = document.getElementById(`switch${deviceNumber}`).checked;
-            const state = isChecked ? "ON" : "OFF";
-            
-            const topic = topicPrefix + deviceNumber;
-            const payload = JSON.stringify({ device: deviceNumber, status: state });
-            
-            client.publish(topic, payload, { qos: 0 }, (error) => {
-                if (error) {
-                    console.error('Publish error: ', error);
-                } else {
-                    console.log(`Published: [${topic}] ${payload}`);
+                const match = topic.match(/relay\/(\d+)\/state$/);
+                if (match) {
+                    const idx = Number(match[1]);
+                    updateRelayUI(idx, msg === "ON");
                 }
             });
         }
+
+        for (let i = 1; i <= RELAY_COUNT; i++) {
+            const sw = document.getElementById(`switch${i}`);
+            if (sw) {
+                sw.addEventListener("change", (e) => {
+                    if (!client || !client.connected) { sw.checked = !sw.checked; return; }
+                    ledGrid.classList.remove("flow-active", "loop-active"); 
+                    const nextState = sw.checked ? "ON" : "OFF";
+                    sw.checked = !sw.checked; 
+                    client.publish(`${BASE_TOPIC}/relay/${i}/cmd`, nextState, { qos: 1 });
+                });
+            }
+        }
+
+        allOnBtn.addEventListener("click", () => {
+            if (!client || !client.connected) return;
+            ledGrid.classList.remove("loop-active");
+            ledGrid.classList.add("flow-active");
+            for (let i = 1; i <= RELAY_COUNT; i++) {
+                setTimeout(() => {
+                    client.publish(`${BASE_TOPIC}/relay/${i}/cmd`, "ON", { qos: 1 });
+                    updateRelayUI(i, true);
+                }, i * 200); 
+            }
+            setTimeout(() => { ledGrid.classList.remove("flow-active"); }, (RELAY_COUNT * 200) + 500);
+        });
+
+        allOffBtn.addEventListener("click", () => {
+            if (!client || !client.connected) return;
+            ledGrid.classList.remove("flow-active", "loop-active");
+            client.publish(`${BASE_TOPIC}/system/all`, "ALL_OFF", { qos: 1 });
+            for (let i = 1; i <= RELAY_COUNT; i++) {
+                updateRelayUI(i, false);
+            }
+        });
+
+        flowBtn.addEventListener("click", () => {
+            if (!client || !client.connected) return;
+            ledGrid.classList.remove("loop-active");
+            ledGrid.classList.add("flow-active"); 
+            
+            client.publish(`${BASE_TOPIC}/system/all`, "ALL_OFF", { qos: 1 });
+            for (let i = 1; i <= RELAY_COUNT; i++) updateRelayUI(i, false);
+
+            for (let i = 1; i <= RELAY_COUNT; i++) {
+                setTimeout(() => {
+                    client.publish(`${BASE_TOPIC}/relay/${i}/cmd`, "ON", { qos: 1 });
+                    updateRelayUI(i, true);
+                    
+                    if (i > 1) {
+                        client.publish(`${BASE_TOPIC}/relay/${i-1}/cmd`, "OFF", { qos: 1 });
+                        updateRelayUI(i-1, false);
+                    }
+                    
+                    if (i === RELAY_COUNT) {
+                        setTimeout(() => {
+                            client.publish(`${BASE_TOPIC}/relay/${i}/cmd`, "OFF", { qos: 1 });
+                            updateRelayUI(i, false);
+                            ledGrid.classList.remove("flow-active");
+                        }, 250);
+                    }
+                }, 150 + (i * 250)); 
+            }
+        });
+
+        loopFlowBtn.addEventListener("click", () => {
+            if (!client || !client.connected) return;
+            ledGrid.classList.remove("flow-active");
+            ledGrid.classList.add("loop-active"); 
+            client.publish(`${BASE_TOPIC}/system/all`, "FLOW_LOOP", { qos: 1 });
+        });
+
+        reconnectBtn.addEventListener("click", () => {
+            if (!client || !client.connected) {
+                setConnectionState(false);
+                connectMQTT();
+            }
+        });
+
+        setConnectionState(false);
+        connectMQTT();
     </script>
 </body>
 </html>
